@@ -85,6 +85,12 @@ async def upload_material(file: UploadFile = File(...)) -> dict[str, str | int]:
                         detail=f"File is too large. The maximum size is {MAX_UPLOAD_SIZE_MB} MB.",
                     )
                 output_file.write(chunk)
+        if total_size == 0:
+            raise HTTPException(status_code=422, detail="Uploaded file is empty.")
+        try:
+            await run_in_threadpool(validate_upload_content, destination, extension)
+        except ValueError as error:
+            raise HTTPException(status_code=415, detail=str(error)) from error
     except HTTPException:
         destination.unlink(missing_ok=True)
         raise
