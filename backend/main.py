@@ -10,9 +10,11 @@ from starlette.concurrency import run_in_threadpool
 
 from .extraction import extract_pdf, extract_pptx
 from .file_validation import validate_upload_content
+from .chat_api import router as chat_router
 
 
 app = FastAPI(title="LearnFlow AI API")
+app.include_router(chat_router)
 
 app.add_middleware(
     CORSMiddleware,
