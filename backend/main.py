@@ -10,15 +10,17 @@ from starlette.concurrency import run_in_threadpool
 
 from .extraction import extract_pdf, extract_pptx
 from .file_validation import validate_upload_content
+from .observability import request_logging_middleware
 from .chat_api import router as chat_router
 
 
 app = FastAPI(title="LearnFlow AI API")
+app.middleware("http")(request_logging_middleware)
 app.include_router(chat_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[origin.strip() for origin in os.getenv("LEARNFLOW_CORS_ORIGINS", "http://localhost:5173").split(",") if origin.strip()],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
