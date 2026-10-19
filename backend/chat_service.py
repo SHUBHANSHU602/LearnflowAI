@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .contracts import ChatRequest, ChatResponse, RetrievalHit, SourceType
-from .llm_provider import ModelProvider, ProviderError
+class ModelProvider(Protocol):
+    async def answer(self, question: str, evidence: list[str]) -> str: ...
 
 
 class AuthorizationError(PermissionError):
@@ -67,7 +68,7 @@ class GroundedChatService:
         valid = valid[:8]
         try:
             answer = await self.provider.answer(request.question, [h.text for h in valid])
-        except ProviderError as exc:
+        except Exception as exc:
             raise ChatUnavailableError("Answer generation unavailable.") from exc
         # Citations are constructed from returned evidence, not accepted from LLM text.
         return ChatResponse(session_id=request.session_id, answer=answer, grounded=True,
