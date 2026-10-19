@@ -46,3 +46,26 @@ jobs:
         run: python -m compileall -q backend
       - name: Run API tests
         run: python -m pytest backend/tests -q
+
+  docker:
+    name: Backend Docker smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f backend/Dockerfile -t learnflow-api:ci .
+      - name: Start container
+        run: docker run --rm -d --name learnflow-ci -p 8000:8000 learnflow-api:ci
+      - name: Check health
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8000/health | grep -q '"status":"ok"'; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs learnflow-ci
+          exit 1
+      - name: Stop container
+        if: always()
+        run: docker rm -f learnflow-ci || true
